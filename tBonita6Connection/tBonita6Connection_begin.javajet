@@ -1,0 +1,50 @@
+<%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.core.model.metadata.IMetadataTable 
+		org.talend.core.model.metadata.IMetadataColumn 
+		org.talend.core.model.process.IConnection
+		org.talend.core.model.process.IConnectionCategory
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		org.talend.core.model.metadata.types.JavaTypesManager
+		org.talend.core.model.metadata.types.JavaType
+		java.util.List 
+    	java.util.Map		
+	" 
+%>
+<% 
+    CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+    INode node = (INode)codeGenArgument.getArgument();
+    String cid = node.getUniqueName();	
+    
+    
+    String serverUrl = ElementParameterParser.getValue(node, "__SERVER_URL__");
+	String applicationName = ElementParameterParser.getValue(node, "__APPLICATION_NAME__");
+	String username = ElementParameterParser.getValue(node, "__USERNAME__");
+	String password = ElementParameterParser.getValue(node, "__PASSWORD__");
+    String dieOnError = ElementParameterParser.getValue(node, "__DIE_ON_ERROR__");
+	boolean isDieOnError = "true".equals(dieOnError);
+%>
+
+java.util.Map<String, String> map_<%=cid%> = new java.util.HashMap<String, String>();
+map_<%=cid%>.put("server.url", <%=serverUrl%>);
+map_<%=cid%>.put("application.name", <%=applicationName%>);
+
+try {
+
+    org.bonitasoft.engine.util.APITypeManager.setAPITypeAndParams(org.bonitasoft.engine.api.ApiAccessType.HTTP, map_<%=cid%>);
+	org.bonitasoft.engine.api.LoginAPI loginAPI_<%=cid%> = org.bonitasoft.engine.api.TenantAPIAccessor.getLoginAPI();
+	org.bonitasoft.engine.session.APISession session_<%=cid%> = loginAPI_<%=cid%>.login(<%=username%>, <%=password%>);
+
+
+	globalMap.put("bonitaAPISession_"+"<%=cid%>", session_<%=cid%>);
+
+} catch (Exception e) {
+	System.err.println("Error: connection could not be established");
+	globalMap.put("<%=cid%>_ERROR_MESSAGE", "Connection could not be established");
+	globalMap.put("<%=cid%>_ERROR_MESSAGE", e.getMessage());
+<%   if (isDieOnError) { %>
+	throw e;
+<%  } %>
+} 

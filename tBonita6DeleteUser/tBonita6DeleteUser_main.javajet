@@ -1,0 +1,47 @@
+<%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.core.model.metadata.IMetadataTable 
+		org.talend.core.model.metadata.IMetadataColumn 
+		org.talend.core.model.process.IConnection
+		org.talend.core.model.process.IConnectionCategory
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		org.talend.core.model.metadata.types.JavaTypesManager
+		org.talend.core.model.metadata.types.JavaType
+		java.util.List 
+    	java.util.Map		
+	" 
+%>
+<% 
+  	CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+    INode node = (INode)codeGenArgument.getArgument();
+    String cid = node.getUniqueName();
+    
+    String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
+    String session = "bonitaAPISession_" + connection;
+    
+    String username = ElementParameterParser.getValue(node, "__USERNAME__");	
+	
+    String dieOnError = ElementParameterParser.getValue(node, "__DIE_ON_ERROR__");
+	boolean isDieOnError = "true".equals(dieOnError);
+    
+%>
+
+try {
+
+	org.bonitasoft.engine.session.APISession session_<%=cid%> = (org.bonitasoft.engine.session.APISession)globalMap.get("<%=session%>");
+	org.bonitasoft.engine.api.IdentityAPI identityAPI_<%=cid%> = org.bonitasoft.engine.api.TenantAPIAccessor.getIdentityAPI(session_<%=cid%>);
+
+	identityAPI_<%=cid%>.deleteUser(<%=username%>);
+
+	
+} catch (Exception e) {
+		System.err.println("Error: user could not be created");
+	globalMap.put("<%=cid%>_ERROR_MESSAGE", "Connection could not be established");
+	globalMap.put("<%=cid%>_ERROR_MESSAGE", e.getMessage());
+<%   if (isDieOnError) { %>
+	throw e;
+<%  } %>
+} 
+	

@@ -1,0 +1,31 @@
+<%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.core.model.metadata.IMetadataTable 
+		org.talend.core.model.metadata.IMetadataColumn 
+		org.talend.core.model.process.IConnection
+		org.talend.core.model.process.IConnectionCategory
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		org.talend.core.model.metadata.types.JavaTypesManager
+		org.talend.core.model.metadata.types.JavaType
+		java.util.List 
+    	java.util.Map		
+	" 
+%>
+<% 
+  	CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+    INode node = (INode)codeGenArgument.getArgument();
+    String cid = node.getUniqueName();
+    
+    String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
+    String conn = "bonitaAPISession_" + connection;
+%>
+
+	org.bonitasoft.engine.session.APISession session_<%=cid%> = (org.bonitasoft.engine.session.APISession)globalMap.get("<%=conn%>");
+	
+	org.bonitasoft.engine.api.LoginAPI loginAPI_<%=cid%> = org.bonitasoft.engine.api.TenantAPIAccessor.getLoginAPI();
+	
+	loginAPI_<%=cid%>.logout(session_<%=cid%>);
+
+ 

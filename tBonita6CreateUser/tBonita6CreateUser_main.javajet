@@ -1,0 +1,83 @@
+<%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.core.model.metadata.IMetadataTable 
+		org.talend.core.model.metadata.IMetadataColumn 
+		org.talend.core.model.process.IConnection
+		org.talend.core.model.process.IConnectionCategory
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		org.talend.core.model.metadata.types.JavaTypesManager
+		org.talend.core.model.metadata.types.JavaType
+		java.util.List 
+    	java.util.Map		
+	" 
+%>
+<% 
+  	CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+    INode node = (INode)codeGenArgument.getArgument();
+    String cid = node.getUniqueName();
+    
+    String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
+    String session = "bonitaAPISession_" + connection;
+    
+    String username = ElementParameterParser.getValue(node, "__USERNAME__");
+	String password = ElementParameterParser.getValue(node, "__PASSWORD__");
+	String firstName = ElementParameterParser.getValue(node, "__FIRST_NAME__");
+	String lastName = ElementParameterParser.getValue(node, "__LAST_NAME__");
+	String title = ElementParameterParser.getValue(node, "__TITLE__");
+	String jobTitle = ElementParameterParser.getValue(node, "__JOB_TITLE__");
+	
+	
+    String dieOnError = ElementParameterParser.getValue(node, "__DIE_ON_ERROR__");
+	boolean isDieOnError = "true".equals(dieOnError);
+    
+%>
+
+try {
+
+	org.bonitasoft.engine.session.APISession session_<%=cid%> = (org.bonitasoft.engine.session.APISession)globalMap.get("<%=session%>");
+	org.bonitasoft.engine.api.IdentityAPI identityAPI_<%=cid%> = org.bonitasoft.engine.api.TenantAPIAccessor.getIdentityAPI(session_<%=cid%>);
+
+
+	org.bonitasoft.engine.identity.UserCreator creator_<%=cid%> = new org.bonitasoft.engine.identity.UserCreator(<%=username%>, <%=password%>);
+	creator_<%=cid%>.setFirstName(<%=firstName%>)
+			.setLastName(<%=lastName%>);
+	<%  if (!("").equals(title)) { %>
+			
+			creator_<%=cid%>.setTitle(<%=title%>);
+	<% }
+	if (!("").equals(jobTitle)) { %>
+			
+			creator_<%=cid%>.setJobTitle(<%=jobTitle%>);
+	<%  }%>
+			
+			
+			
+	org.bonitasoft.engine.identity.User user_<%=cid%> = identityAPI_<%=cid%>.createUser(creator_<%=cid%>);
+
+	// reference the user in the profile User
+	org.bonitasoft.engine.api.ProfileAPI orgProfileAPI_<%=cid%> = 	org.bonitasoft.engine.api.TenantAPIAccessor.getProfileAPI(session_<%=cid%>);
+	org.bonitasoft.engine.search.SearchOptionsBuilder searchOptionsBuilder_<%=cid%> = new org.bonitasoft.engine.search.SearchOptionsBuilder(0,10);
+	searchOptionsBuilder_<%=cid%>.filter(org.bonitasoft.engine.profile.ProfileSearchDescriptor.NAME, "User");
+	org.bonitasoft.engine.search.SearchResult<org.bonitasoft.engine.profile.Profile> searchResultProfile_<%=cid%> = orgProfileAPI_<%=cid%>.searchProfiles(searchOptionsBuilder_<%=cid%>.done());
+   
+	// we should find one result now
+	if (searchResultProfile_<%=cid%>.getResult().size() < 1)
+        { System.err.println("Should not happen"); }
+
+	// now register the user in the profile
+	org.bonitasoft.engine.profile.Profile profile_<%=cid%> = searchResultProfile_<%=cid%>.getResult().get(0);
+	org.bonitasoft.engine.profile.ProfileMemberCreator profileMemberCreator_<%=cid%> = new org.bonitasoft.engine.profile.ProfileMemberCreator(profile_<%=cid%>.getId());
+	profileMemberCreator_<%=cid%>.setUserId(user_<%=cid%>.getId());
+	orgProfileAPI_<%=cid%>.createProfileMember(profileMemberCreator_<%=cid%>);
+	
+} catch (Exception e) {
+		System.err.println("Error: user could not be created");
+	globalMap.put("<%=cid%>_ERROR_MESSAGE", "Connection could not be established");
+	globalMap.put("<%=cid%>_ERROR_MESSAGE", e.getMessage());
+<%   if (isDieOnError) { %>
+	throw e;
+<%  } %>
+} 
+	
