@@ -28,6 +28,35 @@
 	String title = ElementParameterParser.getValue(node, "__TITLE__");
 	String jobTitle = ElementParameterParser.getValue(node, "__JOB_TITLE__");
 	
+	String managerID = ElementParameterParser.getValue(node, "__MANAGER__");
+	
+	
+	String businessDetails = ElementParameterParser.getValue(node, "__BUSINESS_DETAILS__");
+	boolean isBusinessDetails = "true".equals(businessDetails);
+	
+	String addressBusiness = ElementParameterParser.getValue(node, "__ADDRESS_BUSINESS__");
+	String cityBusiness  = ElementParameterParser.getValue(node, "__CITY_BUSINESS__");
+	String countryBusiness  = ElementParameterParser.getValue(node, "__COUNTRY_BUSINESS__");
+	String zipBusiness  = ElementParameterParser.getValue(node, "__ZIP_BUSINESS__");
+	String stateBusiness  = ElementParameterParser.getValue(node, "__STATE_BUSINESS__");
+	String emailBusiness  = ElementParameterParser.getValue(node, "__EMAIL_BUSINESS__");
+	String phoneBusiness  = ElementParameterParser.getValue(node, "__PHONE_BUSINESS__");
+	String mobileBusiness  = ElementParameterParser.getValue(node, "__MOBILE_BUSINESS__");
+	
+	
+	
+	String privateDetails = ElementParameterParser.getValue(node, "__PRIVATE_DETAILS__");
+	boolean isPrivateDetails = "true".equals(privateDetails);
+	String addressPrivate = ElementParameterParser.getValue(node, "__ADDRESS_PRIVATE__");
+	String cityPrivate = ElementParameterParser.getValue(node, "__CITY_PRIVATE__");
+	String countryPrivate = ElementParameterParser.getValue(node, "__COUNTRY_PRIVATE__");
+	String zipPrivate = ElementParameterParser.getValue(node, "__ZIP_PRIVATE__");
+	String statePrivate = ElementParameterParser.getValue(node, "__STATE_PRIVATE__");
+	String emailPrivate = ElementParameterParser.getValue(node, "__EMAIL_PRIVATE__");
+	String phonePrivate = ElementParameterParser.getValue(node, "__PHONE_PRIVATE__");
+	String mobilePrivate = ElementParameterParser.getValue(node, "__MOBILE_PRIVATE__");
+	
+	
 	
     String dieOnError = ElementParameterParser.getValue(node, "__DIE_ON_ERROR__");
 	boolean isDieOnError = "true".equals(dieOnError);
@@ -51,7 +80,100 @@ try {
 			
 			creator_<%=cid%>.setJobTitle(<%=jobTitle%>);
 	<%  }%>
+	
+	// if the manager username is set, we look for it in Bonita and set its id.
+	<%  if (!("").equals(managerID)) { %>
+		try {
+			org.bonitasoft.engine.identity.User manager_<%=cid%> = identityAPI_<%=cid%>.getUserByUserName(<%=managerID%>);
+			creator_<%=cid%>.setManagerUserId(manager_<%=cid%>.getId());
+		}
+		catch(Exception e){
+			System.err.println("Error: Cannot find the managerId");
+			globalMap.put("<%=cid%>_ERROR_MESSAGE", "Cannot find the managerId");
+			globalMap.put("<%=cid%>_ERROR_MESSAGE", e.getMessage());
+			<%   if (isDieOnError) { %>
+				throw e;
+			<%  } %>
+		}
+	<% }%>
 			
+	<%   if (isBusinessDetails) { %>
+	
+		org.bonitasoft.engine.identity.ContactDataCreator businessDetailsCreator_<%=cid%> = new org.bonitasoft.engine.identity.ContactDataCreator();
+		<%  if (!("").equals(addressBusiness)) { %>
+				
+				businessDetailsCreator_<%=cid%>.setAddress(<%=addressBusiness%>);
+		<% }
+		if (!("").equals(cityBusiness)) { %>
+				
+				businessDetailsCreator_<%=cid%>.setCity(<%=cityBusiness%>);
+		<% }
+		if (!("").equals(countryBusiness)) { %>
+				
+				businessDetailsCreator_<%=cid%>.setCountry(<%=countryBusiness%>);
+		<% }
+		if (!("").equals(zipBusiness)) { %>
+				
+				businessDetailsCreator_<%=cid%>.setZipCode(<%=zipBusiness%>);
+		<% }
+		if (!("").equals(stateBusiness)) { %>
+				
+				businessDetailsCreator_<%=cid%>.setState(<%=stateBusiness%>);
+		<% }
+		if (!("").equals(emailBusiness)) { %>
+				
+				businessDetailsCreator_<%=cid%>.setEmail(<%=emailBusiness%>);
+		<% }
+		if (!("").equals(phoneBusiness)) { %>
+				
+				businessDetailsCreator_<%=cid%>.setPhoneNumber(<%=phoneBusiness%>);
+		<% }
+		if (!("").equals(mobileBusiness)) { %>
+				
+				businessDetailsCreator_<%=cid%>.setMobileNumber(<%=mobileBusiness%>);
+		<%  }%>
+		creator_<%=cid%>.setProfessionalContactData(businessDetailsCreator_<%=cid%>);
+	<%  } %>
+	
+		<%   if (isPrivateDetails) { %>
+	
+		org.bonitasoft.engine.identity.ContactDataCreator privateDetailsCreator_<%=cid%> = new org.bonitasoft.engine.identity.ContactDataCreator();
+		<%  if (!("").equals(addressPrivate)) { %>
+				
+				privateDetailsCreator_<%=cid%>.setAddress(<%=addressPrivate%>);
+		<% }
+		if (!("").equals(cityPrivate)) { %>
+				
+				privateDetailsCreator_<%=cid%>.setCity(<%=cityPrivate%>);
+		<% }
+		if (!("").equals(countryPrivate)) { %>
+				
+				privateDetailsCreator_<%=cid%>.setCountry(<%=countryPrivate%>);
+		<% }
+		if (!("").equals(zipPrivate)) { %>
+				
+				privateDetailsCreator_<%=cid%>.setZipCode(<%=zipPrivate%>);
+		<% }
+		if (!("").equals(statePrivate)) { %>
+				
+				privateDetailsCreator_<%=cid%>.setState(<%=statePrivate%>);
+		<% }
+		if (!("").equals(emailPrivate)) { %>
+				
+				privateDetailsCreator_<%=cid%>.setEmail(<%=emailPrivate%>);
+		<% }
+		if (!("").equals(phonePrivate)) { %>
+				
+				privateDetailsCreator_<%=cid%>.setPhoneNumber(<%=phonePrivate%>);
+		<% }
+		if (!("").equals(mobilePrivate)) { %>
+				
+				privateDetailsCreator_<%=cid%>.setMobileNumber(<%=mobilePrivate%>);
+		<%  }%>
+		creator_<%=cid%>.setPersonalContactData(privateDetailsCreator_<%=cid%>);	
+	<%  } %>
+	
+	
 			
 			
 	org.bonitasoft.engine.identity.User user_<%=cid%> = identityAPI_<%=cid%>.createUser(creator_<%=cid%>);
@@ -73,7 +195,7 @@ try {
 	orgProfileAPI_<%=cid%>.createProfileMember(profileMemberCreator_<%=cid%>);
 	
 } catch (Exception e) {
-		System.err.println("Error: user could not be created");
+	System.err.println("Error: user could not be created");
 	globalMap.put("<%=cid%>_ERROR_MESSAGE", "Connection could not be established");
 	globalMap.put("<%=cid%>_ERROR_MESSAGE", e.getMessage());
 <%   if (isDieOnError) { %>
