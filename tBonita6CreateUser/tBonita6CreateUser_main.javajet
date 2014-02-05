@@ -56,7 +56,11 @@
 	String phonePrivate = ElementParameterParser.getValue(node, "__PHONE_PRIVATE__");
 	String mobilePrivate = ElementParameterParser.getValue(node, "__MOBILE_PRIVATE__");
 	
-	
+	List<Map<String, String>> memberships =
+    (List<Map<String,String>>)ElementParameterParser.getObjectValue(
+        node,
+        "__MEMBERSHIPS__"
+    );
 	
     String dieOnError = ElementParameterParser.getValue(node, "__DIE_ON_ERROR__");
 	boolean isDieOnError = "true".equals(dieOnError);
@@ -193,6 +197,25 @@ try {
 	org.bonitasoft.engine.profile.ProfileMemberCreator profileMemberCreator_<%=cid%> = new org.bonitasoft.engine.profile.ProfileMemberCreator(profile_<%=cid%>.getId());
 	profileMemberCreator_<%=cid%>.setUserId(user_<%=cid%>.getId());
 	orgProfileAPI_<%=cid%>.createProfileMember(profileMemberCreator_<%=cid%>);
+	
+	//here we should add all the memberships
+	
+	<% 
+		 if(memberships != null && memberships.size() > 0) {
+		 int m_counter= 0;
+		 for(Map<String, String> membership : memberships) {
+		 	String group = membership.get("GROUPPATH");
+		 	String role = membership.get("ROLENAME");	 	
+	%>
+		Long group_<%=m_counter%> = identityAPI_<%=cid%>.getGroupByPath(<%=group%>).getId();
+		Long role_<%=m_counter%> =  identityAPI_<%=cid%>.getRoleByName(<%=role%>).getId();
+		identityAPI_<%=cid%>.addUserMembership(user_<%=cid%>.getId(),group_<%=m_counter%>,role_<%=m_counter%>);
+	<%
+	m_counter++; } //for end
+	} //if end
+	
+	%>
+	
 	
 } catch (Exception e) {
 	System.err.println("Error: user could not be created");
